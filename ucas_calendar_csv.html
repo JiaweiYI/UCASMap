@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中科院大学2025年5月活动日历（含地点信息）- CSV下载</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.4em;
+            background: linear-gradient(45deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+        
+        .stats {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            background: linear-gradient(45deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.95em;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        
+        .location-stats {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .location-stats h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .location-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .location-item {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .location-name {
+            color: #2c3e50;
+            font-weight: 500;
+            flex: 1;
+            margin-right: 10px;
+        }
+        
+        .location-count {
+            color: #3498db;
+            font-weight: 600;
+            background: #e3f2fd;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .download-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .download-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 18px 45px;
+            font-size: 1.3em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+            margin: 0 15px 15px 0;
+            font-weight: 600;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(52, 152, 219, 0.4);
+        }
+        
+        .download-btn.copy-btn {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3);
+        }
+        
+        .download-btn.copy-btn:hover {
+            box-shadow: 0 12px 30px rgba(39, 174, 96, 0.4);
+        }
+        
+        .preview-section {
+            margin-top: 35px;
+        }
+        
+        .preview-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 0.95em;
+        }
+        
+        .preview-table th {
+            background: linear-gradient(45deg, #34495e, #2c3e50);
+            color: white;
+            padding: 18px 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .preview-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #ecf0f1;
+            vertical-align: top;
+        }
+        
+        .preview-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .preview-table tr:hover {
+            background: #e3f2fd;
+            transition: background-color 0.2s ease;
+        }
+        
+        .activity-type {
+            padding: 6px 14px;
+            border-radius: 25px;
+            font-size: 0.85em;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .type-academic {
+            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+            color: #1565c0;
+        }
+        
+        .type-student {
+            background: linear-gradient(45deg, #f3e5f5, #e1bee7);
+            color: #6a1b9a;
+        }
+        
+        .type-other {
+            background: linear-gradient(45deg, #e8f5e8, #c8e6c9);
+            color: #2e7d32;
+        }
+        
+        .activity-title {
+            font-weight: 500;
+            color: #2c3e50;
+            line-height: 1.4;
+            max-width: 300px;
+        }
+        
+        .date-column {
+            font-family: 'Courier New', monospace;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+        
+        .location-column {
+            color: #27ae60;
+            font-weight: 500;
+            max-width: 200px;
+            line-height: 1.3;
+        }
+        
+        .info-box {
+            background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffd32a;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
+            color: #856404;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, #f39c12, #e67e22);
+        }
+        
+        .info-box strong {
+            color: #d68910;
+        }
+        
+        .campus-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        
+        .campus-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .campus-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .campus-zhongguancun { background: #3498db; }
+        .campus-yuquanlu { background: #e74c3c; }
+        .campus-yanqihu { background: #f39c12; }
+        .campus-other { background: #95a5a6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 中国科学院大学</h1>
+        <div class="location-stats">
+            <h3>📍 活动地点分布</h3>
+            <div class="location-grid" id="locationGrid">
+                <!-- 地点统计将通过JavaScript动态生成 -->
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <strong>📋 数据说明:</strong> 本页面从中科院大学官方日历提取了2025年5月的所有活动信息，包含活动日期、标题、类型、地点等详细信息。地点信息基于官方数据和活动类型推断得出。CSV文件采用UTF-8编码，可在Excel中正常显示中文。
+        </div>
+        
+        <div class="download-section">
+            <button class="download-btn" onclick="downloadCSV()">📥 下载完整CSV文件</button>
+            <button class="download-btn copy-btn" onclick="copyToClipboard()">📋 复制数据</button>
+        </div>
+        
+        <div class="preview-section">
+            <h2>📊 活动详情预览</h2>
+            <div class="table-container">
+                <table class="preview-table" id="previewTable">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>星期</th>
+                            <th>活动标题</th>
+                            <th>活动类型</th>
+                            <th>地点</th>
+                            <th>联系人</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 包含地点信息的活动数据
+        const activitiesWithLocation = [
+            {date: "2025-05-02", weekday: "星期五", title: "KITS Journal Club 0502", type: "学术活动", location: "中关村-7号楼401会议室", contact: "", time: "待确认"},
+            {date: "2025-05-04", weekday: "星期日", title: "非平衡态统计物理未来发展方向国际研讨会-1", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-05", weekday: "星期一", title: "非平衡态统计物理未来发展方向国际研讨会-2", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-06", weekday: "星期二", title: "交错磁体新物性探索与调控研究", type: "其他活动", location: "中关村校区-物理科学学院", contact: "", time: "待确认"},
+            {date: "2025-05-06", weekday: "星期二", title: "\"SEM工商管理\"系列讲座", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-06", weekday: "星期二", title: "非平衡态统计物理未来发展方向国际研讨会-3", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-07", weekday: "星期三", title: "\"许国志管理科学讲座\" 青年学者论坛", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-07", weekday: "星期三", title: "非平衡态统计物理未来发展方向国际研讨会-4", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-08", weekday: "星期四", title: "明德讲堂M1057：原始思维的两重性 ——兼论现代创造性思维方式", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-08", weekday: "星期四", title: "非平衡态统计物理未来发展方向国际研讨会-5", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-09", weekday: "星期五", title: "KITS Journal Club 0509", type: "学术活动", location: "中关村-7号楼401会议室", contact: "", time: "待确认"},
+            {date: "2025-05-09", weekday: "星期五", title: "非平衡态统计物理未来发展方向国际研讨会-6", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-10", weekday: "星期六", title: "人文学院科学技术史系2025年硕、博学位论文答辩会", type: "学生活动", location: "玉泉路-人文楼223会议室", contact: "康丽婷 17801121266", time: "08:00-18:00"},
+            {date: "2025-05-13", weekday: "星期二", title: "明德讲堂M1058：艺术心理疗愈——向内探索", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-13", weekday: "星期二", title: "\"邹至庄讲座\"杰出学者论坛", type: "学术活动", location: "中国科学院数学与系统科学研究院南楼N204", contact: "", time: "待确认"},
+            {date: "2025-05-13", weekday: "星期二", title: "数字经济系列讲座", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-14", weekday: "星期三", title: "艺术与人文修养讲座系列第194讲：《孙子兵法》与中国军事文化", type: "学术活动", location: "玉泉路校区-礼堂", contact: "", time: "待确认"},
+            {date: "2025-05-14", weekday: "星期三", title: "明德讲堂M1060：\"五四\"摄影：图像的附会、挪用与真实性问题", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-14", weekday: "星期三", title: "明德讲堂M1059：以\"规矩\"一词为线索看《营造法式》和《鲁班经》中\"儒、匠、巫\"的知识和实践", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-14", weekday: "星期三", title: "\"许国志管理科学讲座\" 青年学者论坛", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-14", weekday: "星期三", title: "玉泉金融讲堂", type: "学术活动", location: "玉泉路校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-15", weekday: "星期四", title: "明德讲堂M1062：雍正皇帝与康乾盛世", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-15", weekday: "星期四", title: "明德讲堂M1061：花鸟画的吉祥密码 \"活\"在影视里的画", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-15", weekday: "星期四", title: "\"SEM工商管理\"系列讲座", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-16", weekday: "星期五", title: "【科学前沿讲座】多体量子纠缠的刻画和应用", type: "学术活动", location: "中关村校区-物理科学学院", contact: "", time: "待确认"},
+            {date: "2025-05-16", weekday: "星期五", title: "KITS Journal Club 0516", type: "学术活动", location: "中关村-7号楼401会议室", contact: "", time: "待确认"},
+            {date: "2025-05-19", weekday: "星期一", title: "明德讲堂M1063：历史视阈下的中国共产党为什么能", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-20", weekday: "星期二", title: "明德讲堂M1064：雕塑巡礼", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-21", weekday: "星期三", title: "\"许国志管理科学讲座\" 青年学者论坛", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-22", weekday: "星期四", title: "数字经济发展与治理论坛", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-22", weekday: "星期四", title: "\"SEM工商管理\"系列讲座", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-23", weekday: "星期五", title: "杰出科学家系列讲座", type: "学术活动", location: "雁栖湖校区-学术交流中心", contact: "", time: "待确认"},
+            {date: "2025-05-23", weekday: "星期五", title: "KITS Journal Club 0523", type: "学术活动", location: "中关村-7号楼401会议室", contact: "", time: "待确认"},
+            {date: "2025-05-24", weekday: "星期六", title: "2025年国科大本科港澳台综合评价面试D组", type: "学生活动", location: "玉泉路校区-招生办公室", contact: "", time: "待确认"},
+            {date: "2025-05-26", weekday: "星期一", title: "\"许国志管理科学讲座\" 青年学者论坛", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-27", weekday: "星期二", title: "\"邹至庄讲座\"杰出学者论坛", type: "学术活动", location: "中国科学院数学与系统科学研究院南楼N204", contact: "", time: "待确认"},
+            {date: "2025-05-28", weekday: "星期三", title: "\"许国志管理科学讲座\" 青年学者论坛", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-28", weekday: "星期三", title: "\"SEM工商管理\"系列讲座", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-30", weekday: "星期五", title: "KITS Journal Club 0530", type: "学术活动", location: "中关村-7号楼401会议室", contact: "", time: "待确认"}
+        ];
+
+        // 生成包含地点信息的CSV内容
+        function generateEnhancedCSV() {
+            const headers = ['日期', '星期', '活动标题', '活动类型', '地点', '联系人', '时间', '月份'];
+            const csvRows = activitiesWithLocation.map(activity => [
+                activity.date,
+                activity.weekday,
+                activity.title,
+                activity.type,
+                activity.location,
+                activity.contact,
+                activity.time,
+                '2025年05月'
+            ]);
+            
+            const csvContent = [headers, ...csvRows]
+                .map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+                .join('\n');
+            return '\uFEFF' + csvContent;
+        }
+
+        // 下载CSV文件
+        function downloadCSV() {
+            const csvContent = generateEnhancedCSV();
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', '中科院大学2025年5月活动日历_含地点信息.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // 显示成功提示
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✅ 下载成功！';
+            btn.style.background = 'linear-gradient(45deg, #27ae60, #229954)';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = 'linear-gradient(45deg, #3498db, #2980b9)';
+            }, 2000);
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard() {
+            const csvContent = generateEnhancedCSV();
+            navigator.clipboard.writeText(csvContent).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ 已复制！';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                const textArea = document.createElement('textarea');
+                textArea.value = csvContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ 已复制！';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        // 获取活动类型的CSS类
+        function getTypeClass(type) {
+            switch(type) {
+                case '学术活动': return 'type-academic';
+                case '学生活动': return 'type-student';
+                case '其他活动': return 'type-other';
+                default: return 'type-other';
+            }
+        }
+
+        // 渲染表格
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = activitiesWithLocation.map(activity => `
+                <tr>
+                    <td class="date-column">${activity.date}</td>
+                    <td>${activity.weekday}</td>
+                    <td class="activity-title">${activity.title}</td>
+                    <td><span class="activity-type ${getTypeClass(activity.type)}">${activity.type}</span></td>
+                    <td class="location-column">${activity.location}</td>
+                    <td>${activity.contact}</td>
+                    <td>${activity.time}</td>
+                </tr>
+            `).join('');
+        }
+
+        // 渲染地点统计
+        function renderLocationStats() {
+            const locationCount = {};
+            activitiesWithLocation.forEach(activity => {
+                locationCount[activity.location] = (locationCount[activity.location] || 0) + 1;
+            });
+
+            const sortedLocations = Object.entries(locationCount).sort((a, b) => b[1] - a[1]);
+            const locationGrid = document.getElementById('locationGrid');
+            
+            locationGrid.innerHTML = sortedLocations.map(([location, count]) => `
+                <div class="location-item">
+                    <div class="location-name">${location}</div>
+                    <div class="location-count">${count}个</div>
+                </div>
+            `).join('');
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTable();
+            renderLocationStats();
+            
+            // 更新统计数据
+            const stats = activitiesWithLocation.reduce((acc, activity) => {
+                acc[activity.type] = (acc[activity.type] || 0) + 1;
+                return acc;
+            }, {});
+            
+            const uniqueLocations = new Set(activitiesWithLocation.map(a => a.location)).size;
+            
+            document.getElementById('totalCount').textContent = activitiesWithLocation.length;
+            document.getElementById('academicCount').textContent = stats['学术活动'] || 0;
+            document.getElementById('studentCount').textContent = stats['学生活动'] || 0;
+            document.getElementById('locationCount').textContent = uniqueLocations;
+        });
+    </script>
+</body>
+</html>="subtitle">2025年5月活动日历数据提取（含地点信息）</div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="totalCount">39</span>
+                <div class="stat-label">总活动数</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="academicCount">35</span>
+                <div class="stat-label">学术活动</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="studentCount">2</span>
+                <div class="stat-label">学生活动</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="locationCount">11</span>
+                <div class="stat-label">活动地点</div>
+            </div>
+        </div>
+        
+        <div class="campus-legend">
+            <div class="campus-item">
+                <div class="campus-dot campus-zhongguancun"></div>
+                <span>中关村校区</span>
+            </div>
+            <div class="campus-item">
+                <div class="campus-dot campus-yuquanlu"></div>
+                <span>玉泉路校区</span>
+            </div>
+            <div class="campus-item">
+                <div class="campus-dot campus-yanqihu"></div>
+                <span>雁栖湖校区</span>
+            </div>
+            <div class="campus-item">
+                <div class="campus-dot campus-other"></div>
+                <span>其他地点</span>
+            </div>
+        </div>
+        
+        <div class

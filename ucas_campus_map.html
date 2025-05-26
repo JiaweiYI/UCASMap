@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UCASMap-国科大校园活动地图</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .container {
+            display: flex;
+            height: calc(100vh - 120px);
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .controls {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .filter-group {
+            margin-bottom: 15px;
+        }
+        
+        .filter-group label {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .filter-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .filter-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .campus-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .campus-btn {
+            padding: 6px 12px;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .campus-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .campus-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        
+        .stats {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+        
+        .stat-value {
+            color: #2c3e50;
+            font-weight: 600;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .activity-list {
+            padding: 20px;
+        }
+        
+        .activity-item {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #3498db;
+        }
+        
+        .activity-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left-color: #e74c3c;
+        }
+        
+        .activity-item.selected {
+            border-color: #e74c3c;
+            background: #fff5f5;
+        }
+        
+        .activity-date {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .activity-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .activity-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .activity-type {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .type-academic {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .type-student {
+            background: #f3e5f5;
+            color: #6a1b9a;
+        }
+        
+        .type-other {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .activity-location {
+            font-size: 11px;
+            color: #27ae60;
+            font-weight: 500;
+        }
+        
+        /* Custom Leaflet Styles */
+        .custom-popup {
+            font-family: inherit;
+        }
+        
+        .popup-header {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 12px;
+            margin: -15px -15px 15px -15px;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .popup-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .popup-location {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .popup-activities {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .popup-activity {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .popup-activity:last-child {
+            border-bottom: none;
+        }
+        
+        .popup-activity-date {
+            font-size: 11px;
+            color: #7f8c8d;
+        }
+        
+        .popup-activity-title {
+            font-size: 12px;
+            color: #2c3e50;
+            margin: 2px 0;
+            line-height: 1.3;
+        }
+        
+        .popup-activity-type {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+        
+        /* Loading animation */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            color: #7f8c8d;
+        }
+        
+        .loading::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid #3498db;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 40vh;
+                order: 2;
+            }
+            
+            .map-container {
+                height: 60vh;
+                order: 1;
+            }
+        }
+        
+        /* Map controls positioning */
+        .leaflet-control-layers {
+            margin-right: 60px !important;
+            margin-top: 10px !important;
+        }
+        
+        .map-upload-area {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1001;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 120px;
+        }
+        
+        .map-info-area {
+            position: absolute;
+            bottom: 60px;
+            right: 10px;
+            z-index: 1001;
+            background: rgba(255,255,255,0.95);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 12px;
+            color: #666;
+            max-width: 200px;
+        }
+        
+        .upload-btn {
+            padding: 8px 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: background 0.3s ease;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .upload-btn:hover {
+            background: #2980b9;
+        }
+        
+        .map-status {
+            margin-top: 8px;
+            padding: 4px 8px;
+            background: #e8f5e8;
+            color: #2e7d32;
+            border-radius: 4px;
+            font-size: 10px;
+            text-align: center;
+        }
+        
+        .keyboard-hints {
+            margin-top: 8px;
+            font-size: 10px;
+            color: #7f8c8d;
+            line-height: 1.3;
+        }
+        
+        #imageUpload {
+            display: none;
+        }
+        
+        .campus-marker {
+            background: #fff;
+            border: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #3498db;
+            font-size: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .campus-marker:hover {
+            transform: scale(1.2);
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+        
+        .activity-item.expired {
+            opacity: 0.6;
+            border-left-color: #95a5a6;
+        }
+        
+        .activity-item.upcoming {
+            border-left-color: #27ae60;
+            background: linear-gradient(to right, #f8fff8, white);
+        }
+        
+        .activity-item.upcoming::before {
+            content: '🕒';
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 16px;
+        }
+        
+        .activity-item {
+            position: relative;
+        }
+        
+        .activity-status {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+        
+        .status-upcoming {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status-past {
+            background: #f5f5f5;
+            color: #757575;
+        }
+        
+        .current-time-widget {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .time-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .current-date {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .current-time-large {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .current-weekday {
+            font-size: 12px;
+            opacity: 0.8;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(52, 152, 219, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎓 中国科学院大学校园活动地图</h1>
+        <p>2025年5月校园活动空间分布 - 点击地图标记查看详细信息</p>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="controls">
+                <div class="current-time-widget">
+                    <div class="time-display">
+                        <div class="current-date" id="currentDate">2025年05月30日</div>
+                        <div class="current-time-large" id="currentTimeLarge">13:30:00</div>
+                        <div class="current-weekday" id="currentWeekday">星期五</div>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>📅 活动时间状态</label>
+                    <select id="statusFilter">
+                        <option value="">全部活动</option>
+                        <option value="upcoming" selected>即将进行</option>
+                        <option value="past">已结束</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>📅 活动日期筛选</label>
+                    <select id="dateFilter">
+                        <option value="">全部日期</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>🏷️ 活动类型筛选</label>
+                    <select id="typeFilter">
+                        <option value="">全部类型</option>
+                        <option value="学术活动">学术活动</option>
+                        <option value="学生活动">学生活动</option>
+                        <option value="其他活动">其他活动</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">校园活动数量</span>
+                    <span class="stat-value" id="visibleCount">16</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">活动地点数量</span>
+                    <span class="stat-value" id="locationCount">3</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">即将进行</span>
+                    <span class="stat-value" id="upcomingCount">0</span>
+                </div>
+            </div>
+            
+            <div class="activity-list">
+                <div id="activityItems">
+                    <div class="loading">加载活动数据中...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <div class="map-upload-area">
+                <input type="file" id="imageUpload" accept="image/*">
+                <button class="upload-btn" onclick="document.getElementById('imageUpload').click()">
+                    📁 上传地图
+                </button>
+                <div class="map-status" id="mapStatus">使用预设地图</div>
+            </div>
+            
+            <div class="map-info-area">
+                <div style="font-weight: 600; margin-bottom: 5px;">🎮 快捷键</div>
+                <div class="keyboard-hints">
+                    <div>1 - 手绘地图</div>
+                    <div>2 - 街道地图</div>
+                    <div>3 - 卫星地图</div>
+                    <div>ESC - 重置筛选</div>
+                </div>
+                <div style="margin-top: 8px; font-size: 10px; color: #95a5a6;">
+                    坐标范围: 40.3986°-40.4164°N<br>
+                    116.6673°-116.6914°E
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <script>
+        // 活动数据
+        const activitiesData = [
+            {date: "2025-05-02", weekday: "星期五", title: "KITS Journal Club 0502", type: "学术活动", location: "中关村-7号楼401会议室", contact: "", time: "待确认"},
+            {date: "2025-05-04", weekday: "星期日", title: "非平衡态统计物理未来发展方向国际研讨会-1", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-05", weekday: "星期一", title: "非平衡态统计物理未来发展方向国际研讨会-2", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-06", weekday: "星期二", title: "交错磁体新物性探索与调控研究", type: "其他活动", location: "中关村校区-物理科学学院", contact: "", time: "待确认"},
+            {date: "2025-05-06", weekday: "星期二", title: "\"SEM工商管理\"系列讲座", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-06", weekday: "星期二", title: "非平衡态统计物理未来发展方向国际研讨会-3", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-07", weekday: "星期三", title: "\"许国志管理科学讲座\" 青年学者论坛", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-07", weekday: "星期三", title: "非平衡态统计物理未来发展方向国际研讨会-4", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-08", weekday: "星期四", title: "明德讲堂M1057：原始思维的两重性 ——兼论现代创造性思维方式", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-08", weekday: "星期四", title: "非平衡态统计物理未来发展方向国际研讨会-5", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-09", weekday: "星期五", title: "KITS Journal Club 0509", type: "学术活动", location: "中关村-7号楼401会议室", contact: "", time: "待确认"},
+            {date: "2025-05-09", weekday: "星期五", title: "非平衡态统计物理未来发展方向国际研讨会-6", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-10", weekday: "星期六", title: "人文学院科学技术史系2025年硕、博学位论文答辩会", type: "学生活动", location: "玉泉路-人文楼223会议室", contact: "康丽婷 17801121266", time: "08:00-18:00"},
+            {date: "2025-05-13", weekday: "星期二", title: "明德讲堂M1058：艺术心理疗愈——向内探索", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-13", weekday: "星期二", title: "\"邹至庄讲座\"杰出学者论坛", type: "学术活动", location: "中国科学院数学与系统科学研究院南楼N204", contact: "", time: "待确认"},
+            {date: "2025-05-13", weekday: "星期二", title: "数字经济系列讲座", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-14", weekday: "星期三", title: "艺术与人文修养讲座系列第194讲：《孙子兵法》与中国军事文化", type: "学术活动", location: "玉泉路校区-礼堂", contact: "", time: "待确认"},
+            {date: "2025-05-14", weekday: "星期三", title: "明德讲堂M1060：\"五四\"摄影：图像的附会、挪用与真实性问题", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-14", weekday: "星期三", title: "明德讲堂M1059：以\"规矩\"一词为线索看《营造法式》和《鲁班经》中\"儒、匠、巫\"的知识和实践", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-14", weekday: "星期三", title: "\"许国志管理科学讲座\" 青年学者论坛", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-14", weekday: "星期三", title: "玉泉金融讲堂", type: "学术活动", location: "玉泉路校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-15", weekday: "星期四", title: "明德讲堂M1062：雍正皇帝与康乾盛世", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-15", weekday: "星期四", title: "明德讲堂M1061：花鸟画的吉祥密码 \"活\"在影视里的画", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-15", weekday: "星期四", title: "\"SEM工商管理\"系列讲座", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-16", weekday: "星期五", title: "【科学前沿讲座】多体量子纠缠的刻画和应用", type: "学术活动", location: "中关村校区-物理科学学院", contact: "", time: "待确认"},
+            {date: "2025-05-16", weekday: "星期五", title: "KITS Journal Club 0516", type: "学术活动", location: "中关村-7号楼401会议室", contact: "", time: "待确认"},
+            {date: "2025-05-19", weekday: "星期一", title: "明德讲堂M1063：历史视阈下的中国共产党为什么能", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-20", weekday: "星期二", title: "明德讲堂M1064：雕塑巡礼", type: "学术活动", location: "雁栖湖东区教2-101", contact: "", time: "待确认"},
+            {date: "2025-05-21", weekday: "星期三", title: "\"许国志管理科学讲座\" 青年学者论坛", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-22", weekday: "星期四", title: "数字经济发展与治理论坛", type: "学术活动", location: "雁栖湖校区-会议中心", contact: "", time: "待确认"},
+            {date: "2025-05-22", weekday: "星期四", title: "\"SEM工商管理\"系列讲座", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-23", weekday: "星期五", title: "杰出科学家系列讲座", type: "学术活动", location: "雁栖湖校区-学术交流中心", contact: "", time: "待确认"},
+            {date: "2025-05-23", weekday: "星期五", title: "KITS Journal Club 0523", type: "学术活动", location: "中关村-7号楼401会议室", contact: "", time: "待确认"},
+            {date: "2025-05-24", weekday: "星期六", title: "2025年国科大本科港澳台综合评价面试D组", type: "学生活动", location: "玉泉路校区-招生办公室", contact: "", time: "待确认"},
+            {date: "2025-05-26", weekday: "星期一", title: "\"许国志管理科学讲座\" 青年学者论坛", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-27", weekday: "星期二", title: "\"邹至庄讲座\"杰出学者论坛", type: "学术活动", location: "中国科学院数学与系统科学研究院南楼N204", contact: "", time: "待确认"},
+            {date: "2025-05-28", weekday: "星期三", title: "\"许国志管理科学讲座\" 青年学者论坛", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-28", weekday: "星期三", title: "\"SEM工商管理\"系列讲座", type: "学术活动", location: "中关村校区-经管学院", contact: "", time: "待确认"},
+            {date: "2025-05-30", weekday: "星期五", title: "KITS Journal Club 0530", type: "学术活动", location: "中关村-7号楼401会议室", contact: "", time: "待确认"}
+        ];
+        
+        // 地点坐标映射 (更新雁栖湖校区坐标)
+        const locationCoordinates = {
+            "中关村-7号楼401会议室": [39.9750, 116.3150],
+            "中关村校区-经管学院": [39.9760, 116.3160],
+            "中关村校区-物理科学学院": [39.9740, 116.3140],
+            "雁栖湖校区-会议中心": [40.4064, 116.6749],
+            "雁栖湖东区教2-101": [40.4064, 116.6783],
+            "雁栖湖校区-学术交流中心": [40.4064, 116.6750],
+            "玉泉路-人文楼223会议室": [39.9180, 116.2650],
+            "玉泉路校区-礼堂": [39.9190, 116.2660],
+            "玉泉路校区-经管学院": [39.9170, 116.2640],
+            "玉泉路校区-招生办公室": [39.9185, 116.2655],
+            "中国科学院数学与系统科学研究院南楼N204": [39.9780, 116.3200]
+        };
+        
+        // 全局变量
+        let map;
+        let markers = [];
+        let filteredActivities = [];
+        let selectedMarker = null;
+        let campusImageOverlay = null;
+        let baseLayers = {};
+        let layerControl = null;
+        
+        // 当前时间 
+        const currentDateTime = new Date();
+        
+        // 仅显示雁栖湖校区的活动
+        const yanqihuActivities = activitiesData.filter(activity => 
+            activity.location.includes('雁栖湖')
+        );
+        
+        // 雁栖湖校区的地理范围 (根据手绘地图坐标调整)
+        const yanqihuBounds = [[40.3986, 116.6673], [40.4164, 116.6914]];
+        
+        // 手绘地图的URL (GitHub上的图片)
+        const handDrawnMapURL = 'https://raw.githubusercontent.com/JiaweiYI/UCASMap/main/UCAS%20map%20jimeng.jpeg';
+        
+        // 初始化地图
+        function initMap() {
+            // 创建地图，以雁栖湖校区为中心
+            const centerLat = (40.3986 + 40.4164) / 2;
+            const centerLng = (116.6673 + 116.6914) / 2;
+            map = L.map('map').setView([centerLat, centerLng], 16);
+            
+            // 限制地图显示范围为雁栖湖校区
+            map.setMaxBounds(yanqihuBounds);
+            map.options.minZoom = 14;
+            map.options.maxZoom = 18;
+            
+            // 创建基础图层
+            const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            });
+            
+            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© Esri'
+            });
+            
+            // 创建手绘地图图层
+            createHandDrawnMapLayer();
+            
+            // 设置基础图层
+            baseLayers = {
+                "🎨 手绘校园地图": campusImageOverlay,
+                "🌍 OpenStreetMap": osmLayer,
+                "🛰️ 卫星地图": satelliteLayer
+            };
+            
+            // 设置手绘地图为默认图层
+            campusImageOverlay.addTo(map);
+            updateMapStatus('手绘地图加载中...');
+            
+            // 初始化过滤后的活动数据
+            filteredActivities = [...yanqihuActivities];
+            
+            // 创建标记
+            createMarkers();
+            
+            // 初始化侧边栏
+            initSidebar();
+            
+            // 添加图层控制
+            addLayerControl();
+            
+            // 更新时间显示
+            updateCurrentTime();
+            
+            // 应用默认筛选（只显示即将进行的活动）
+            applyFilters();
+        }
+        
+        // 更新当前时间显示
+        function updateCurrentTime() {
+            const dateElement = document.getElementById('currentDate');
+            const timeLargeElement = document.getElementById('currentTimeLarge');
+            const weekdayElement = document.getElementById('currentWeekday');
+            const headerTimeElement = document.getElementById('currentTime');
+            
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            
+            function updateTime() {
+                // 更新当前时间（每秒递增）
+                currentDateTime.setSeconds(currentDateTime.getSeconds() + 1);
+                
+                // 格式化日期
+                const year = currentDateTime.getFullYear();
+                const month = String(currentDateTime.getMonth() + 1).padStart(2, '0');
+                const day = String(currentDateTime.getDate()).padStart(2, '0');
+                const weekday = weekdays[currentDateTime.getDay()];
+                
+                // 格式化时间
+                const hours = String(currentDateTime.getHours()).padStart(2, '0');
+                const minutes = String(currentDateTime.getMinutes()).padStart(2, '0');
+                const seconds = String(currentDateTime.getSeconds()).padStart(2, '0');
+                
+                // 更新侧边栏显示
+                if (dateElement) dateElement.textContent = `${year}年${month}月${day}日`;
+                if (timeLargeElement) timeLargeElement.textContent = `${hours}:${minutes}:${seconds}`;
+                if (weekdayElement) weekdayElement.textContent = weekday;
+                
+                // 更新头部显示
+                if (headerTimeElement) {
+                    headerTimeElement.textContent = `${year}年${month}月${day}日 ${weekday} ${hours}:${minutes}:${seconds}`;
+                }
+            }
+            
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+        
+        // 创建手绘地图图层
+        function createHandDrawnMapLayer() {
+            // 使用GitHub上的手绘地图
+            campusImageOverlay = L.imageOverlay(handDrawnMapURL, yanqihuBounds, {
+                opacity: 0.85,
+                interactive: false,
+                attribution: '国科大雁栖湖校区手绘地图 © JiaweiYI',
+                crossOrigin: 'anonymous'
+            });
+            
+            // 监听图片加载事件
+            campusImageOverlay.on('load', function() {
+                console.log('手绘地图加载成功');
+                updateMapStatus('手绘地图已加载');
+            });
+            
+            campusImageOverlay.on('error', function() {
+                console.log('手绘地图加载失败，使用备用方案');
+                updateMapStatus('地图加载失败');
+            });
+            
+            return campusImageOverlay;
+        }
+        
+        // 更新地图状态显示
+        function updateMapStatus(status) {
+            const statusElement = document.getElementById('mapStatus');
+            if (statusElement) {
+                statusElement.textContent = status;
+                statusElement.style.background = status.includes('失败') ? '#ffebee' : '#e8f5e8';
+                statusElement.style.color = status.includes('失败') ? '#c62828' : '#2e7d32';
+            }
+        }
+        
+        // 添加图层控制
+        function addLayerControl() {
+            if (layerControl) {
+                map.removeControl(layerControl);
+            }
+            
+            layerControl = L.control.layers(baseLayers, null, {
+                position: 'topright',
+                collapsed: true
+            }).addTo(map);
+            
+            // 添加比例尺
+            L.control.scale({
+                position: 'bottomleft',
+                metric: true,
+                imperial: false
+            }).addTo(map);
+            
+            // 监听图层切换事件
+            map.on('baselayerchange', function(e) {
+                updateMapStatus('当前: ' + e.name);
+            });
+        }
+        
+        // 判断活动是否已过期
+        function isActivityExpired(activity) {
+            const activityDate = new Date(activity.date + 'T23:59:59');
+            return activityDate < currentDateTime;
+        }
+        
+        // 获取活动状态
+        function getActivityStatus(activity) {
+            return isActivityExpired(activity) ? 'past' : 'upcoming';
+        }
+        
+        // 排序活动（未来活动在前，过期活动在后）
+        function sortActivitiesByTime(activities) {
+            return activities.sort((a, b) => {
+                const aExpired = isActivityExpired(a);
+                const bExpired = isActivityExpired(b);
+                
+                if (aExpired && !bExpired) return 1;
+                if (!aExpired && bExpired) return -1;
+                
+                // 同一状态按日期排序
+                return new Date(a.date) - new Date(b.date);
+            });
+        }
+        // 创建地图标记
+        function createMarkers() {
+            // 清除现有标记
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            
+            // 按地点分组活动
+            const locationGroups = {};
+            filteredActivities.forEach(activity => {
+                if (!locationGroups[activity.location]) {
+                    locationGroups[activity.location] = [];
+                }
+                locationGroups[activity.location].push(activity);
+            });
+            
+            // 为每个地点创建标记
+            Object.entries(locationGroups).forEach(([location, activities]) => {
+                const coords = locationCoordinates[location];
+                if (!coords) return;
+                
+                // 检查是否有即将进行的活动
+                const hasUpcoming = activities.some(activity => !isActivityExpired(activity));
+                const hasOnlyPast = activities.every(activity => isActivityExpired(activity));
+                
+                // 创建自定义标记
+                const markerElement = document.createElement('div');
+                let markerClass = 'campus-marker has-activities';
+                
+                if (hasUpcoming) {
+                    markerClass += ' upcoming-activities';
+                } else if (hasOnlyPast) {
+                    markerClass += ' past-activities';
+                }
+                
+                markerElement.className = markerClass;
+                markerElement.innerHTML = activities.length;
+                
+                const marker = L.marker(coords, {
+                    icon: L.divIcon({
+                        html: markerElement.outerHTML,
+                        className: 'custom-marker',
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    })
+                }).addTo(map);
+                
+                // 创建弹窗内容
+                const sortedActivities = sortActivitiesByTime(activities);
+                const popupContent = createPopupContent(location, sortedActivities);
+                marker.bindPopup(popupContent, {
+                    maxWidth: 350,
+                    className: 'custom-popup'
+                });
+                
+                // 添加点击事件
+                marker.on('click', () => {
+                    selectLocation(location);
+                    highlightActivitiesInSidebar(sortedActivities);
+                });
+                
+                markers.push(marker);
+            });
+        }
+        
+        // 创建弹窗内容
+        function createPopupContent(location, activities) {
+            const typeColors = {
+                '学术活动': '#e3f2fd',
+                '学生活动': '#f3e5f5',
+                '其他活动': '#e8f5e8'
+            };
+            
+            let content = `
+                <div class="popup-header">
+                    <div class="popup-title">${getLocationDisplayName(location)}</div>
+                    <div class="popup-location">${activities.length}个活动</div>
+                </div>
+                <div class="popup-activities">
+            `;
+            
+            activities.forEach(activity => {
+                const status = getActivityStatus(activity);
+                const statusText = status === 'upcoming' ? '即将进行' : '已结束';
+                const statusClass = status === 'upcoming' ? 'status-upcoming' : 'status-past';
+                
+                content += `
+                    <div class="popup-activity">
+                        <div class="popup-activity-date">
+                            ${activity.date} ${activity.weekday}
+                            <span class="activity-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="popup-activity-title">${activity.title}</div>
+                        <span class="popup-activity-type" style="background: ${typeColors[activity.type]}; color: ${getTypeColor(activity.type)}">${activity.type}</span>
+                    </div>
+                `;
+            });
+            
+            content += '</div>';
+            return content;
+        }
+        
+        // 获取地点显示名称
+        function getLocationDisplayName(location) {
+            return location.replace(/^(中关村校区-|雁栖湖校区-|玉泉路校区-|中关村-|雁栖湖东区|玉泉路-)/, '');
+        }
+        
+        // 获取类型颜色
+        function getTypeColor(type) {
+            switch(type) {
+                case '学术活动': return '#1565c0';
+                case '学生活动': return '#6a1b9a';
+                case '其他活动': return '#2e7d32';
+                default: return '#333';
+            }
+        }
+        
+        // 选择地点
+        function selectLocation(location) {
+            selectedMarker = location;
+            // 在这里可以添加地点选择的视觉反馈
+        }
+        
+        // 在侧边栏高亮活动
+        function highlightActivitiesInSidebar(activities) {
+            // 清除之前的高亮
+            document.querySelectorAll('.activity-item.selected').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // 高亮相关活动
+            activities.forEach(activity => {
+                const activityElement = document.querySelector(`[data-activity-id="${activity.date}-${activity.title}"]`);
+                if (activityElement) {
+                    activityElement.classList.add('selected');
+                    activityElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        }
+        
+        // 初始化侧边栏
+        function initSidebar() {
+            // 填充日期筛选器
+            const dateFilter = document.getElementById('dateFilter');
+            const uniqueDates = [...new Set(yanqihuActivities.map(a => a.date))].sort();
+            uniqueDates.forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                const activity = yanqihuActivities.find(a => a.date === date);
+                const status = isActivityExpired({date}) ? '已结束' : '即将进行';
+                option.textContent = `${date} ${activity.weekday} (${status})`;
+                dateFilter.appendChild(option);
+            });
+            
+            // 渲染活动列表
+            renderActivityList();
+            
+            // 绑定筛选器事件
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('dateFilter').addEventListener('change', applyFilters);
+            document.getElementById('typeFilter').addEventListener('change', applyFilters);
+        }
+        
+        // 渲染活动列表
+        function renderActivityList() {
+            const activityItems = document.getElementById('activityItems');
+            
+            if (filteredActivities.length === 0) {
+                activityItems.innerHTML = '<div style="text-align: center; color: #7f8c8d; padding: 20px;">没有找到符合条件的活动</div>';
+                return;
+            }
+            
+            // 按时间排序活动
+            const sortedActivities = sortActivitiesByTime([...filteredActivities]);
+            
+            activityItems.innerHTML = sortedActivities.map(activity => {
+                const status = getActivityStatus(activity);
+                const statusText = status === 'upcoming' ? '即将进行' : '已结束';
+                const statusClass = status === 'upcoming' ? 'status-upcoming' : 'status-past';
+                const itemClass = status === 'upcoming' ? 'upcoming' : 'expired';
+                
+                return `
+                    <div class="activity-item ${itemClass}" data-activity-id="${activity.date}-${activity.title}" onclick="focusOnActivity('${activity.location}')">
+                        <div class="activity-date">
+                            ${activity.date} ${activity.weekday}
+                            <span class="activity-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="activity-title">${activity.title}</div>
+                        <div class="activity-meta">
+                            <span class="activity-type ${getTypeClass(activity.type)}">${activity.type}</span>
+                            <span class="activity-location">${getLocationDisplayName(activity.location)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // 创建手绘地图图层
+        function createHandDrawnMapLayer() {
+            // 使用window.fs.readFile读取上传的图片文件
+            // 这里我们先创建一个占位符，实际图片将通过文件上传功能加载
+            
+            // 模拟手绘地图的base64数据 - 在实际使用中，这将通过文件上传获得
+            // 现在先用一个透明的1x1像素图片作为占位符
+            const placeholderImageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+            
+            campusImageOverlay = L.imageOverlay(placeholderImageData, yanqihuBounds, {
+                opacity: 0.8,
+                interactive: false,
+                attribution: '国科大雁栖湖校区手绘地图'
+            });
+            
+            return campusImageOverlay;
+        }
+        
+        // 添加图层控制
+        function addLayerControl() {
+            if (layerControl) {
+                map.removeControl(layerControl);
+            }
+            
+            layerControl = L.control.layers(baseLayers, null, {
+                position: 'topright',
+                collapsed: false
+            }).addTo(map);
+            
+            // 添加比例尺
+            L.control.scale({
+                position: 'bottomleft',
+                metric: true,
+                imperial: false
+            }).addTo(map);
+        }
+            updateStats();
+        }
+        
+        // 获取活动类型CSS类
+        function getTypeClass(type) {
+            switch(type) {
+                case '学术活动': return 'type-academic';
+                case '学生活动': return 'type-student';
+                case '其他活动': return 'type-other';
+                default: return 'type-other';
+            }
+        }
+        
+        // 聚焦到活动地点
+        function focusOnActivity(location) {
+            const coords = locationCoordinates[location];
+            if (coords) {
+                map.setView(coords, 18);
+                
+                // 找到对应的标记并打开弹窗
+                markers.forEach(marker => {
+                    const markerLatLng = marker.getLatLng();
+                    if (Math.abs(markerLatLng.lat - coords[0]) < 0.0001 && Math.abs(markerLatLng.lng - coords[1]) < 0.0001) {
+                        marker.openPopup();
+                    }
+                });
+            }
+        }
+        
+        // 应用筛选器
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            
+            filteredActivities = yanqihuActivities.filter(activity => {
+                // 时间状态筛选
+                if (statusFilter) {
+                    const activityStatus = getActivityStatus(activity);
+                    if (statusFilter !== activityStatus) return false;
+                }
+                
+                // 日期筛选
+                if (dateFilter && activity.date !== dateFilter) return false;
+                
+                // 类型筛选
+                if (typeFilter && activity.type !== typeFilter) return false;
+                
+                return true;
+            });
+            
+            // 重新渲染
+            renderActivityList();
+            createMarkers();
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            const visibleCount = document.getElementById('visibleCount');
+            const locationCount = document.getElementById('locationCount');
+            const upcomingCount = document.getElementById('upcomingCount');
+            
+            visibleCount.textContent = filteredActivities.length;
+            
+            const uniqueLocations = new Set(filteredActivities.map(a => a.location)).size;
+            locationCount.textContent = uniqueLocations;
+            
+            const upcoming = filteredActivities.filter(a => !isActivityExpired(a)).length;
+            upcomingCount.textContent = upcoming;
+        }
+        
+        // 处理手绘地图上传
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imageUrl = event.target.result;
+                    
+                    // 移除之前的图片覆盖层
+                    if (campusImageOverlay) {
+                        map.removeLayer(campusImageOverlay);
+                    }
+                    
+                    // 使用预设的雁栖湖校区坐标范围
+                    const imageBounds = yanqihuBounds;
+                    
+                    // 创建新的图片覆盖层
+                    campusImageOverlay = L.imageOverlay(imageUrl, imageBounds, {
+                        opacity: 0.85,
+                        interactive: false,
+                        attribution: '国科大雁栖湖校区自定义地图'
+                    });
+                    
+                    // 更新图层控制
+                    baseLayers["🎨 手绘校园地图"] = campusImageOverlay;
+                    
+                    // 重新创建图层控制
+                    if (layerControl) {
+                        map.removeControl(layerControl);
+                    }
+                    
+                    addLayerControl();
+                    
+                    // 添加到地图并调整视图
+                    campusImageOverlay.addTo(map);
+                    map.fitBounds(imageBounds);
+                    
+                    updateMapStatus('自定义地图已加载');
+                    
+                    alert('自定义手绘地图已上传并设置完成！\n\n坐标范围：\n南: 40.3986°, 西: 116.6673°\n北: 40.4164°, 东: 116.6914°\n\n您可以通过右上角的图层控制或快捷键切换不同的地图显示。');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+        });
+        
+        // 添加键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // ESC键清除所有筛选
+                document.getElementById('statusFilter').value = 'upcoming'; // 重置为默认
+                document.getElementById('dateFilter').value = '';
+                document.getElementById('typeFilter').value = '';
+                applyFilters();
+            } else if (e.key === '1') {
+                // 数字键1切换到手绘地图
+                switchToLayer("🎨 手绘校园地图");
+            } else if (e.key === '2') {
+                // 数字键2切换到OpenStreetMap
+                switchToLayer("🌍 OpenStreetMap");
+            } else if (e.key === '3') {
+                // 数字键3切换到卫星图
+                switchToLayer("🛰️ 卫星地图");
+            }
+        });
+        
+        // 切换图层的辅助函数
+        function switchToLayer(targetLayerName) {
+            // 移除当前所有图层
+            Object.values(baseLayers).forEach(layer => {
+                if (map.hasLayer(layer)) {
+                    map.removeLayer(layer);
+                }
+            });
+            
+            // 添加目标图层
+            const targetLayer = baseLayers[targetLayerName];
+            if (targetLayer) {
+                targetLayer.addTo(map);
+                updateMapStatus('当前: ' + targetLayerName.replace(/[🎨🌍🛰️]\s/, ''));
+            }
+        }
+        
+        // 移除不需要的addMapControls函数调用
+        // 图层控制已经在addLayerControl函数中处理
+    </script>
+</body>
+</html>
