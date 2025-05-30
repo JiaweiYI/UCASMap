@@ -78,7 +78,7 @@
 			};
 			
 			//添加GeoJSON矢量数据图层并添加弹窗信息
-			fetch("https://jiaweiyi.github.io/gis_practice/geojson/campus_area.geojson")
+			fetch("https://jiaweiyi.github.io/UCASMap/geojson/campus_area.geojson")
 			  .then(function(response) {
 				return response.json();
 			  })
@@ -89,7 +89,7 @@
 					}).addTo(map)
 				});
 				
-			fetch("https://jiaweiyi.github.io/gis_practice/geojson/building.geojson")
+			fetch("https://jiaweiyi.github.io/UCASMap/geojson/building.geojson")
 			  .then(function(response) {
 				return response.json();
 			  })
