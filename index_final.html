@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+		<title>Campus map WebGIS tutorial - Leaflet</title>
+		
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+		
+		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+		
+		<style>
+		html, body {
+			height: 100%;
+			width: 100%;
+			margin: 0;
+		}
+		.leaflet-container {
+			height: 100%;
+			width: 100%;
+			max-width: 100%;
+			max-height: 100%;
+		}
+		</style>
+	</head>
+	<body>
+		<!-- TODO /-->
+		<div id='map'></div>
+		
+		<script type="text/javascript">
+			/* JavaScript codes */
+			
+			//设置地图显示中心经纬度坐标及地图缩放级别
+			const map = L.map('map').setView([40.4049, 116.6798], 16);
+			
+			//添加WMS图层
+			var basemaps = {
+				'Topography': L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+					layers: 'TOPO-WMS'
+				}),
+
+				'Hillshade': L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+					layers: 'SRTM30-Hillshade'
+				}),
+
+				'Contour': L.tileLayer.wms('http://ows.mundialis.de/services/service?', {
+					layers: 'SRTM30-Contour'
+				}),
+				
+				'OpenStreetMap': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 19,
+				attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+				})
+			};
+			
+			//创建图层
+			L.control.layers(basemaps).addTo(map);
+
+			//地图默认展示OpenStreetMap
+			basemaps.OpenStreetMap.addTo(map);
+			
+			//定义building图层的符号可视化
+			var styleBuild = {
+			"color": "#ff7800", //颜色
+			"weight": 2, //线宽
+			};
+			
+			//定义campus_area图层的符号可视化
+			var styleCampus = {
+			"color": "#0087ff", //颜色
+			"weight": 2, //线宽
+			};
+			
+			//定义弹窗信息函数
+			function popup(feature, layer){
+				layer.bindPopup('<p>'+feature.properties.name+'</p>');
+			};
+			
+			//添加GeoJSON矢量数据图层并添加弹窗信息
+			fetch("https://jiaweiyi.github.io/gis_practice/geojson/campus_area.geojson")
+			  .then(function(response) {
+				return response.json();
+			  })
+			  .then(function(data) {
+				L.geoJSON(data,{
+					style: styleCampus,
+					onEachFeature:popup //添加弹窗信息
+					}).addTo(map)
+				});
+				
+			fetch("https://jiaweiyi.github.io/gis_practice/geojson/building.geojson")
+			  .then(function(response) {
+				return response.json();
+			  })
+			  .then(function(data) {
+				L.geoJSON(data,{
+					style: styleBuild,
+					onEachFeature:popup //添加弹窗信息
+					}).addTo(map)
+				});
+
+		</script>
+	</body>
+</html>
